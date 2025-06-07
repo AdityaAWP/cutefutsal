@@ -38,7 +38,6 @@
     </div>
   </section>
 
-
   {{-- About --}}
   <section id="about"
     class="bg-gradient-to-r from-[#FAA4BD] to-[#F564A9] py-20 w-full flex items-center justify-center px-6 lg:px-24 relative">
@@ -75,11 +74,8 @@
         <img src="foto2.jpg" alt="Futsal Court 2"
           class="w-full h-[225px] rounded-lg shadow-2xl object-cover transform transition-transform duration-500 hover:scale-110 hover:translate-x-4 hover:translate-y-2">
       </div>
-
-
+    </div>
   </section>
-
-
 
   {{-- List Lapangan --}}
   <section id="list" class="bg-cover bg-center py-28 w-full flex items-center justify-center px-6 lg:px-24"
@@ -92,64 +88,43 @@
 
         <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-8 gap-y-12">
 
-          <!-- Card 1 -->
+          @forelse($lapangans as $lapangan)
           <div
             class="bg-white rounded-xl overflow-hidden shadow-lg w-80 transform hover:scale-105 transition-transform duration-300">
-            <img src="futsal3.jpg" alt="Lapangan Futsal" class="w-full h-48 object-cover">
+            <img src="{{ $lapangan->gambar ? asset('images/lapangan/' . $lapangan->gambar) : asset('futsal1.jpg') }}"
+              alt="{{ $lapangan->nama_lapangan }}" class="w-full h-48 object-cover">
             <div class="p-4">
-              <h2 class="text-xl font-bold mb-2 text-gray-800">Lapangan Premium</h2>
+              <h2 class="text-xl font-bold mb-2 text-gray-800">{{ $lapangan->nama_lapangan }}</h2>
+              <p class="text-sm text-gray-600 mb-2 font-semibold">{{ $lapangan->tipe }}</p>
+
+              @if($lapangan->spesifikasi)
               <ul class="text-gray-700 mb-4 list-disc pl-5 text-left space-y-1">
-                <li>Lantai vinyl anti-slip</li>
-                <li>Ruang ganti ber-AC</li>
-                <li>Free air mineral</li>
+                @foreach(explode(',', $lapangan->spesifikasi) as $spec)
+                <li>{{ trim($spec) }}</li>
+                @endforeach
               </ul>
-              <a href="{{ route('pemesanans.index') }}"
+              @endif
+
+              <div class="mb-4">
+                <p class="text-lg font-bold text-pink-600">Rp {{ number_format($lapangan->harga_per_jam, 0, ',', '.')
+                  }}/jam</p>
+              </div>
+
+              <a href="{{ route('pemesanans.create', ['id' => $lapangan->id]) }}"
                 class="bg-pink-600 hover:bg-pink-700 text-white font-semibold py-2 px-4 rounded w-full text-center block transition duration-300">Pesan
                 Sekarang</a>
             </div>
           </div>
-
-          <!-- Card 2 -->
-          <div
-            class="bg-white rounded-xl overflow-hidden shadow-lg w-80 transform hover:scale-105 transition-transform duration-300">
-            <img src="futsal2.jpg" alt="Lapangan Futsal" class="w-full h-48 object-cover">
-            <div class="p-4">
-              <h2 class="text-xl font-bold mb-2 text-gray-800">Lapangan Eksekutif</h2>
-              <ul class="text-gray-700 mb-4 list-disc pl-5 text-left space-y-1">
-                <li>Rumput sintetis internasional</li>
-                <li>VIP room & ruang tunggu</li>
-                <li>Free jersey & air mineral</li>
-              </ul>
-              <a href="{{ route('pemesanans.index') }}"
-                class="bg-pink-600 hover:bg-pink-700 text-white font-semibold py-2 px-4 rounded w-full text-center block transition duration-300">Pesan
-                Sekarang</a>
-            </div>
+          @empty
+          <div class="col-span-full text-center py-8">
+            <p class="text-gray-600 text-lg">Belum ada lapangan tersedia</p>
           </div>
-
-          <!-- Card 3 -->
-          <div
-            class="bg-white rounded-xl overflow-hidden shadow-lg w-80 transform hover:scale-105 transition-transform duration-300">
-            <img src="futsal1.jpg" alt="Lapangan Futsal" class="w-full h-48 object-cover">
-            <div class="p-4">
-              <h2 class="text-xl font-bold mb-2 text-gray-800">Lapangan Santai</h2>
-              <ul class="text-gray-700 mb-4 list-disc pl-5 text-left space-y-1">
-                <li>Lantai standar nyaman</li>
-                <li>Ruang ganti biasa</li>
-                <li>Free air mineral</li>
-              </ul>
-              <a href="{{ route('pemesanans.create', ['lapangans_id' => $lapangans->id]) }}"
-                class="bg-pink-600 hover:bg-pink-700 text-white font-semibold py-2 px-4 rounded w-full text-center block transition duration-300">Pesan
-                Sekarang</a>
-
-            </div>
-          </div>
+          @endforelse
 
         </div>
       </div>
     </div>
   </section>
-
-
 
   {{-- Footer --}}
   @include('components.footer')

@@ -1,11 +1,11 @@
 <nav
   class="bg-gradient-to-r from-[#FAA4BD] to-[#F564A9] shadow-lg w-full py-4 px-6 md:px-40 flex items-center justify-between fixed top-0 left-0 z-50 backdrop-blur-md">
   <a href="/" class="flex items-center space-x-4">
-    <img src="LogoCute.png" alt="Cute Futsal" class="h-12 md:h-16 rounded-lg ">
+    <img src="{{ asset('LogoCute.png') }}" alt="Cute Futsal" class="h-12 md:h-16 rounded-lg">
     <h1 class="text-2xl font-medium tracking-wide">CUTE FUTSAL</h1>
   </a>
 
-  <div class="hidden md:flex space-x-10 items-center font-medium text-lg">
+  <div class="hidden md:flex space-x-10 items-center font-medium ">
     <a href="/"
       class="relative hover:text-white/90 after:absolute after:bottom-0 after:left-0 after:w-0 after:h-[2px] after:bg-white after:transition-all after:duration-300 hover:after:w-full">Home</a>
     <a href="#about"

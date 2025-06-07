@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Pemesanan;
 use App\Models\Lapangan;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 
 class PemesananController extends Controller
 {
@@ -13,18 +14,27 @@ class PemesananController extends Controller
      */
     public function index()
     {
-        $allPemesanan = Pemesanan::with('lapangan')->get();
-        $lapangans = \App\Models\Lapangan::all();
-        return view('form_pemesanan', compact('allPemesanan'));
+        $lapangans = Lapangan::all();
+        $user = Auth::user();
+        return view('form_pemesanan', compact('lapangans', 'user'));
     }
 
     /**
      * Show the form for creating a new resource.
      */
-    public function create()
+    public function create(Request $request)
     {
-        $lapangans = \App\Models\Lapangan::all();
-        return view('form_pemesanan', compact('lapangans'));
+        $lapangans = Lapangan::all();
+        
+        $selectedLapanganId = $request->get('id');
+        $selectedLapangan = null;
+        $user = Auth::user();
+        
+        if ($selectedLapanganId) {
+            $selectedLapangan = Lapangan::find($selectedLapanganId);
+        }
+        
+        return view('form_pemesanan', compact('lapangans', 'selectedLapangan', 'user'));
     }
 
     /**
