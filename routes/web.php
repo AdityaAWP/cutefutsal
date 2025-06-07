@@ -21,8 +21,6 @@ Route::get('/', function () {
 });
 
 
-// Form Pemesanan Routes
-
 
 // Route untuk dashboard setelah login berdasarkan role
 Route::middleware(['auth'])->group(function () {
@@ -34,6 +32,8 @@ Route::middleware(['auth'])->group(function () {
     Route::put('/form_pemesanan/{pemesanan}', [PemesananController::class, 'update'])->name('pemesanan.update'); 
     Route::delete('/form_pemesanan/{id}', [PemesananController::class, 'destroy'])->name('pemesanans.destroy');
     
+    Route::post('/check-availability', [PemesananController::class, 'checkAvailability'])->name('pemesanans.checkAvailability');
+
     Route::get('/admin_welcome', [AdminController::class, 'index'])->name('admin.welcome');
 
 

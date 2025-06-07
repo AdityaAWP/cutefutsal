@@ -4,6 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>Cute Futsal - Form Pemesanan</title>
     @vite(['resources/css/app.css'])
 
@@ -250,68 +251,136 @@
     </div>
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-    // Memanggil checkAvailability ketika halaman pertama kali dimuat
-    const tanggalInput = document.getElementById('tgl_main');
-    const lapanganInput = document.getElementById('lapangan_id');
-    
-    // Memeriksa ketersediaan jika tanggal dan lapangan sudah dipilih
-    if (tanggalInput.value && lapanganInput.value) {
-        checkAvailability();
-    }
+            const tanggalInput = document.getElementById('tgl_main');
+            const hiddenLapanganInput = document.querySelector('input[name="lapangan_id"][type="hidden"]');
+            const selectLapanganDropdown = document.getElementById('lapangan_id'); // This is the <select> element if it exists
 
-    // Menambahkan event listener untuk memeriksa ketersediaan saat tanggal dan lapangan berubah
-    tanggalInput.addEventListener('change', checkAvailability);
-    lapanganInput.addEventListener('change', checkAvailability);
-
-    function checkAvailability() {
-        const tanggal = tanggalInput.value;
-        const lapanganId = lapanganInput.value;
-
-        if (!tanggal || !lapanganId) {
-            return;
-        }
-
-        // Panggil API untuk memeriksa ketersediaan waktu
-        fetch(`/check-availability`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
-            },
-            body: JSON.stringify({
-                tanggal: tanggal,
-                lapangan_id: lapanganId
-            })
-        })
-        .then(response => response.json())
-        .then(data => {
-            // Menonaktifkan opsi waktu yang sudah dibooking
-            const bookedTimes = data.bookedTimes;
             const startTimeSelect = document.getElementById('waktu_mulai');
-            
-            disableBookedTimes(startTimeSelect, bookedTimes); // Disable waktu yang sudah dibooking
-        })
-        .catch(error => {
-            console.error('Error:', error);
-        });
-    }
+            const endTimeSelect = document.getElementById('waktu_selesai');
+            const availabilityStatusDiv = document.getElementById('availability-status');
+            const submitBtn = document.getElementById('submitBtn'); // Assuming your submit button has id="submitBtn"
 
-    // Function untuk menonaktifkan opsi waktu yang sudah dibooking
-    function disableBookedTimes(selectElement, bookedTimes) {
-        const options = selectElement.querySelectorAll('option');
-        options.forEach(option => {
-            // Jika waktu sudah dibooking, nonaktifkan opsi
-            if (bookedTimes.includes(option.value)) {
-                option.disabled = true;
-                option.classList.add('bg-gray-200'); // Bisa menambah kelas untuk memperjelas yang dinonaktifkan
-            } else {
-                option.disabled = false;
-                option.classList.remove('bg-gray-200');
+            function getLapanganId() {
+                if (hiddenLapanganInput) {
+                    return hiddenLapanganInput.value;
+                } else if (selectLapanganDropdown) {
+                    return selectLapanganDropdown.value;
+                }
+                return null;
+            }
+
+            function enableAllTimeOptions(selectElement) {
+                const options = selectElement.querySelectorAll('option');
+                options.forEach(option => {
+                    if (option.value === "") return; // Skip placeholder
+                    option.disabled = false;
+                    option.classList.remove('text-gray-400', 'bg-gray-100', 'cursor-not-allowed');
+                    option.style.backgroundColor = '';
+                    option.style.color = '';
+                });
+            }
+
+            function disableBookedTimes(selectElement, bookedTimes) {
+                const options = selectElement.querySelectorAll('option');
+                options.forEach(option => {
+                    if (option.value === "") return; // Skip placeholder
+
+                    const optionTime = option.value; // e.g., "08:00"
+                    const isBooked = bookedTimes.some(bookedTime => bookedTime.startsWith(optionTime));
+
+                    if (isBooked) {
+                        option.disabled = true;
+                        option.classList.add('text-gray-400', 'bg-gray-100', 'cursor-not-allowed');
+                        option.style.backgroundColor = '#f3f4f6'; // Light gray for disabled
+                        option.style.color = '#9ca3af';      // Medium gray text
+                    }
+                });
+            }
+
+            function validateSelectedTimes() {
+                if (startTimeSelect.value && startTimeSelect.options[startTimeSelect.selectedIndex].disabled) {
+                    startTimeSelect.value = ""; // Reset if current selection is disabled
+                }
+                if (endTimeSelect.value && endTimeSelect.options[endTimeSelect.selectedIndex].disabled) {
+                    endTimeSelect.value = ""; // Reset if current selection is disabled
+                }
+            }
+
+            function checkAvailability() {
+                const tanggal = tanggalInput.value;
+                const lapanganId = getLapanganId();
+
+                // Reset status and enable options/button before new check
+                availabilityStatusDiv.innerHTML = '';
+                availabilityStatusDiv.className = 'hidden'; // Hide status div initially
+                if(submitBtn) submitBtn.disabled = false; // Re-enable submit button
+
+                enableAllTimeOptions(startTimeSelect);
+                enableAllTimeOptions(endTimeSelect);
+
+                if (!tanggal || !lapanganId) {
+                    // console.log("Tanggal atau Lapangan ID belum dipilih untuk cek ketersediaan.");
+                    return;
+                }
+
+                fetch(`/check-availability`, { // Ensure this route is defined in your web.php/api.php
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                    },
+                    body: JSON.stringify({ tanggal: tanggal, lapangan_id: lapanganId })
+                })
+                .then(response => {
+                    if (!response.ok) {
+                        // Try to get more info if it's a non-JSON error response
+                        return response.text().then(text => {
+                            throw new Error(`Server responded with status ${response.status}. Response: ${text.substring(0, 100)}...`);
+                        });
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    const bookedTimes = data.bookedTimes || [];
+                    
+                    if (bookedTimes.length > 0) {
+                        availabilityStatusDiv.innerHTML = `<p class="text-sm text-yellow-700 bg-yellow-50 p-3 rounded-md border border-yellow-200"><i class="fas fa-exclamation-triangle mr-2"></i>Beberapa slot waktu sudah terisi. Slot yang tidak aktif sudah dibooking.</p>`;
+                    } else {
+                        availabilityStatusDiv.innerHTML = `<p class="text-sm text-green-700 bg-green-50 p-3 rounded-md border border-green-200"><i class="fas fa-check-circle mr-2"></i>Semua slot waktu tersedia untuk tanggal dan lapangan ini.</p>`;
+                    }
+                    availabilityStatusDiv.className = 'mt-4 text-center'; // Make status div visible
+
+                    disableBookedTimes(startTimeSelect, bookedTimes);
+                    disableBookedTimes(endTimeSelect, bookedTimes);
+                    validateSelectedTimes(); // Check if selected times became disabled
+                })
+                .catch(error => {
+                    console.error('Error fetching availability:', error);
+                    let errorMessage = "Gagal memeriksa ketersediaan. Silakan coba lagi.";
+                    if (error && error.message) {
+                        if (error.message.includes("Unexpected token '<'")) {
+                            errorMessage = "Gagal memproses respons dari server (kemungkinan bukan JSON). Periksa tab Network di Developer Tools browser Anda untuk detail respons dari '/check-availability'.";
+                        } else {
+                            errorMessage = `Gagal memeriksa ketersediaan: ${error.message}`;
+                        }
+                    } else if (typeof error === 'string') {
+                        errorMessage = `Gagal memeriksa ketersediaan: ${error}`;
+                    }
+                    availabilityStatusDiv.innerHTML = `<p class="text-sm text-red-700 bg-red-50 p-3 rounded-md border border-red-200"><i class="fas fa-times-circle mr-2"></i>${errorMessage}</p>`;
+                    availabilityStatusDiv.className = 'mt-4 text-center';
+                });
+            }
+
+            tanggalInput.addEventListener('change', checkAvailability);
+            if (selectLapanganDropdown) { // Only add listener if the select dropdown exists
+                selectLapanganDropdown.addEventListener('change', checkAvailability);
+            }
+
+            // Initial check on page load if date and lapangan are already set
+            if (tanggalInput.value && getLapanganId()) {
+                checkAvailability();
             }
         });
-    }
-});
-
     </script>
 </body>
 

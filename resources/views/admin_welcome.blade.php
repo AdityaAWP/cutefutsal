@@ -20,7 +20,7 @@
     {{-- Navbar --}}
     <nav
         class="bg-gradient-to-r from-[#FAA4BD] to-[#F564A9] shadow-md w-full py-4 px-6 md:px-40 flex items-center justify-between text-white fixed top-0 left-0 z-50">
-        <a href="#" class="flex items-center">
+        <a href="/" class="flex items-center">
             <img src="{{ asset('LogoCute.png') }}" alt="Cute Futsal" class="h-12 md:h-16 rounded-lg ">
             <h1 class="text-lg font-bold pl-4">CUTE FUTSAL</h1>
         </a>

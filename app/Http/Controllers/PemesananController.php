@@ -30,37 +30,33 @@ class PemesananController extends Controller
 
         return view('form_pemesanan', compact('lapangans', 'selectedLapangan', 'user'));
     }
+
     public function checkAvailability(Request $request)
     {
         $tanggal = $request->tanggal;
         $lapanganId = $request->lapangan_id;
-    
-        // Ambil semua pemesanan yang bertabrakan pada tanggal dan lapangan yang dipilih
+
         $conflictingBookings = Pemesanan::where('lapangan_id', $lapanganId)
             ->where('tgl_main', $tanggal)
             ->get(['waktu_main', 'waktu_selesai']);
-    
-        // Ambil semua waktu yang sudah dibooking dalam format H:i
+
         $bookedTimes = [];
         foreach ($conflictingBookings as $booking) {
             $start = Carbon::parse($booking->waktu_main);
             $end = Carbon::parse($booking->waktu_selesai);
             $current = $start;
-    
+
             while ($current < $end) {
-                $bookedTimes[] = $current->format('H:i'); // Format waktu dalam H:i (jam:menit)
-                $current->addMinutes(30); // Asumsi slot waktu 30 menit
+                $bookedTimes[] = $current->format('H:i');
+                $current->addMinutes(30);
             }
         }
-    
+
         return response()->json([
             'available' => true,
             'bookedTimes' => $bookedTimes
         ]);
     }
-    
-    
-    
 
     public function store(Request $request)
     {
