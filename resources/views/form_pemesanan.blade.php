@@ -7,7 +7,6 @@
     <title>Cute Futsal - Form Pemesanan</title>
     @vite(['resources/css/app.css'])
 
-    <!-- Font & Icon -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap"
         rel="stylesheet">
@@ -15,13 +14,10 @@
 
 <body class="bg-white font-poppins">
 
-    <!-- Navbar -->
     @include('components.header')
 
-    <!-- Main Content -->
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 mt-24">
         <div class="grid lg:grid-cols-2 gap-12 items-center">
-            <!-- Left Side - Image -->
             <div class="order-2 lg:order-1">
                 <div class="relative">
                     @if($selectedLapangan)
@@ -47,14 +43,12 @@
                 </div>
             </div>
 
-            <!-- Right Side - Form -->
             <div class="order-1 lg:order-2">
                 <div class="bg-white p-8 rounded-xl shadow-2xl border-0">
                     <div class="text-center pb-6">
                         <h2 class="text-3xl font-bold text-gray-800 mb-2">Form Pemesanan Lapangan</h2>
                         <p class="text-gray-600">Isi data berikut untuk memesan lapangan futsal</p>
 
-                        <!-- Welcome message for authenticated users -->
                         @if(isset($user) && $user)
                         <div class="mt-4 p-3 bg-green-50 border border-green-200 rounded-lg">
                             <p class="text-green-700 font-medium">
@@ -65,7 +59,6 @@
                         @endif
                     </div>
 
-                    <!-- Selected Lapangan Info -->
                     @if($selectedLapangan)
                     <div class="mb-6 p-4 bg-pink-50 border border-pink-200 rounded-lg">
                         <div class="flex items-center justify-between">
@@ -112,15 +105,13 @@
                         </div>
                         @endif
 
-                        <form action="{{ route('pemesanans.store') }}" method="POST" class="space-y-6">
+                        <form action="{{ route('pemesanans.store') }}" method="POST" class="space-y-6" id="bookingForm">
                             @csrf
 
-                            <!-- Hidden input for selected lapangan -->
                             @if($selectedLapangan)
                             <input type="hidden" name="lapangan_id" value="{{ $selectedLapangan->id }}">
                             @endif
 
-                            <!-- Nama -->
                             <div class="space-y-2">
                                 <label for="nama" class="text-sm font-medium text-gray-700 flex items-center gap-2">
                                     <i class="fas fa-user text-sm"></i>
@@ -142,7 +133,6 @@
                                 @endif
                             </div>
 
-                            <!-- Nomor HP -->
                             <div class="space-y-2">
                                 <label for="no_hp" class="text-sm font-medium text-gray-700 flex items-center gap-2">
                                     <i class="fas fa-phone text-sm"></i>
@@ -154,7 +144,6 @@
                                     required>
                             </div>
 
-                            <!-- Tanggal -->
                             <div class="space-y-2">
                                 <label for="tgl_main" class="text-sm font-medium text-gray-700 flex items-center gap-2">
                                     <i class="fas fa-calendar text-sm"></i>
@@ -162,22 +151,62 @@
                                 </label>
                                 <input type="date" id="tgl_main" name="tgl_main" value="{{ old('tgl_main') }}"
                                     class="mt-1 block w-full px-4 py-3 h-12 border rounded-md focus:ring-2 focus:ring-[#FFB3C6] focus:border-[#FFB3C6] focus:outline-none @error('tgl_main') border-red-500 @enderror"
-                                    min="{{ date('Y-m-d') }}" required>
+                                    min="{{ date('Y-m-d') }}" required onchange="checkAvailability()">
                             </div>
 
-                            <!-- Waktu -->
-                            <div class="space-y-2">
-                                <label for="waktu_main"
-                                    class="text-sm font-medium text-gray-700 flex items-center gap-2">
-                                    <i class="fas fa-clock text-sm"></i>
-                                    Waktu Main
-                                </label>
-                                <input type="time" id="waktu_main" name="waktu_main" value="{{ old('waktu_main') }}"
-                                    class="mt-1 block w-full px-4 py-3 h-12 border rounded-md focus:ring-2 focus:ring-[#FFB3C6] focus:border-[#FFB3C6] focus:outline-none @error('waktu_main') border-red-500 @enderror"
-                                    required>
+                            <div class="grid grid-cols-2 gap-4">
+                                <div class="space-y-2">
+                                    <label for="waktu_mulai"
+                                        class="text-sm font-medium text-gray-700 flex items-center gap-2">
+                                        <i class="fas fa-play text-sm"></i>
+                                        Waktu Mulai
+                                    </label>
+                                    <select id="waktu_mulai" name="waktu_main"
+                                        class="mt-1 block w-full px-4 py-3 h-12 border rounded-md focus:ring-2 focus:ring-[#FFB3C6] focus:border-[#FFB3C6] focus:outline-none @error('waktu_main') border-red-500 @enderror"
+                                        required>
+                                        <option value="">-- Pilih Waktu Mulai --</option>
+                                        <!-- Populate with available time slots dynamically -->
+                                        @foreach (range(6, 22) as $hour)
+                                        <!-- from 6 AM to 10 PM -->
+                                        @foreach (['00', '30'] as $minute)
+                                        <!-- 30-minute intervals -->
+                                        <option value="{{ sprintf('%02d:%02d', $hour, $minute) }}">
+                                            {{ sprintf('%02d:%02d', $hour, $minute) }}
+                                        </option>
+                                        @endforeach
+                                        @endforeach
+                                    </select>
+                                </div>
+
+                                <div class="space-y-2">
+                                    <label for="waktu_selesai"
+                                        class="text-sm font-medium text-gray-700 flex items-center gap-2">
+                                        <i class="fas fa-stop text-sm"></i>
+                                        Waktu Selesai
+                                    </label>
+                                    <select id="waktu_selesai" name="waktu_selesai"
+                                        class="mt-1 block w-full px-4 py-3 h-12 border rounded-md focus:ring-2 focus:ring-[#FFB3C6] focus:border-[#FFB3C6] focus:outline-none @error('waktu_selesai') border-red-500 @enderror"
+                                        required>
+                                        <option value="">-- Pilih Waktu Selesai --</option>
+                                        <!-- Populate with available time slots dynamically -->
+                                        @foreach (range(6, 22) as $hour)
+                                        <!-- from 6 AM to 10 PM -->
+                                        @foreach (['00', '30'] as $minute)
+                                        <!-- 30-minute intervals -->
+                                        <option value="{{ sprintf('%02d:%02d', $hour, $minute) }}">
+                                            {{ sprintf('%02d:%02d', $hour, $minute) }}
+                                        </option>
+                                        @endforeach
+                                        @endforeach
+                                    </select>
+                                </div>
+
+
                             </div>
 
-                            <!-- Lapangan (only show if no selected lapangan) -->
+                            <div id="availability-status" class="hidden">
+                            </div>
+
                             @if(!$selectedLapangan)
                             <div class="space-y-2">
                                 <label for="lapangan_id"
@@ -187,7 +216,7 @@
                                 </label>
                                 <select id="lapangan_id" name="lapangan_id"
                                     class="mt-1 block w-full px-4 py-3 h-12 border rounded-md focus:ring-2 focus:ring-[#FFB3C6] focus:border-[#FFB3C6] focus:outline-none @error('lapangan_id') border-red-500 @enderror"
-                                    required>
+                                    required onchange="checkAvailability()">
                                     <option value="">-- Pilih Lapangan --</option>
                                     @foreach ($lapangans as $lapangan)
                                     <option value="{{ $lapangan->id }}" {{ old('lapangan_id')==$lapangan->id ?
@@ -200,7 +229,6 @@
                             </div>
                             @endif
 
-                            <!-- Change Lapangan Option -->
                             @if($selectedLapangan)
                             <div class="text-center">
                                 <a href="{{ route('pemesanans.create') }}"
@@ -210,8 +238,7 @@
                             </div>
                             @endif
 
-                            <!-- Submit Button -->
-                            <button type="submit"
+                            <button type="submit" id="submitBtn"
                                 class="w-full h-12 bg-[#FFB3C6] hover:bg-pink-400 text-black font-semibold py-3 px-4 rounded-md transition duration-300 transform hover:scale-[1.02] text-lg">
                                 Pesan Sekarang
                             </button>
@@ -221,7 +248,71 @@
             </div>
         </div>
     </div>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+    // Memanggil checkAvailability ketika halaman pertama kali dimuat
+    const tanggalInput = document.getElementById('tgl_main');
+    const lapanganInput = document.getElementById('lapangan_id');
+    
+    // Memeriksa ketersediaan jika tanggal dan lapangan sudah dipilih
+    if (tanggalInput.value && lapanganInput.value) {
+        checkAvailability();
+    }
 
+    // Menambahkan event listener untuk memeriksa ketersediaan saat tanggal dan lapangan berubah
+    tanggalInput.addEventListener('change', checkAvailability);
+    lapanganInput.addEventListener('change', checkAvailability);
+
+    function checkAvailability() {
+        const tanggal = tanggalInput.value;
+        const lapanganId = lapanganInput.value;
+
+        if (!tanggal || !lapanganId) {
+            return;
+        }
+
+        // Panggil API untuk memeriksa ketersediaan waktu
+        fetch(`/check-availability`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+            },
+            body: JSON.stringify({
+                tanggal: tanggal,
+                lapangan_id: lapanganId
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            // Menonaktifkan opsi waktu yang sudah dibooking
+            const bookedTimes = data.bookedTimes;
+            const startTimeSelect = document.getElementById('waktu_mulai');
+            
+            disableBookedTimes(startTimeSelect, bookedTimes); // Disable waktu yang sudah dibooking
+        })
+        .catch(error => {
+            console.error('Error:', error);
+        });
+    }
+
+    // Function untuk menonaktifkan opsi waktu yang sudah dibooking
+    function disableBookedTimes(selectElement, bookedTimes) {
+        const options = selectElement.querySelectorAll('option');
+        options.forEach(option => {
+            // Jika waktu sudah dibooking, nonaktifkan opsi
+            if (bookedTimes.includes(option.value)) {
+                option.disabled = true;
+                option.classList.add('bg-gray-200'); // Bisa menambah kelas untuk memperjelas yang dinonaktifkan
+            } else {
+                option.disabled = false;
+                option.classList.remove('bg-gray-200');
+            }
+        });
+    }
+});
+
+    </script>
 </body>
 
 </html>
